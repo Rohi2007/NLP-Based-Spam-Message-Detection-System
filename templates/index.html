@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spam Message Detection System</title>
+  <style>
+    /* ── Reset & Base ───────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary:   #1a56db;
+      --primary-d: #1342b0;
+      --spam:      #e02424;
+      --spam-bg:   #fff5f5;
+      --ham:       #057a55;
+      --ham-bg:    #f0fdf4;
+      --gray-50:   #f9fafb;
+      --gray-100:  #f3f4f6;
+      --gray-200:  #e5e7eb;
+      --gray-400:  #9ca3af;
+      --gray-600:  #4b5563;
+      --gray-800:  #1f2937;
+      --shadow:    0 4px 24px rgba(0,0,0,.08);
+      --radius:    12px;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--gray-100);
+      color: var(--gray-800);
+      min-height: 100vh;
+    }
+
+    /* ── Header ─────────────────────────────────────────────────── */
+    header {
+      background: linear-gradient(135deg, #1a56db 0%, #0d47a1 100%);
+      color: #fff;
+      padding: 28px 24px 24px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,.2);
+    }
+    header h1 { font-size: 1.9rem; font-weight: 700; letter-spacing: -.5px; }
+    header p  { margin-top: 6px; opacity: .85; font-size: .95rem; }
+
+    /* ── Layout ─────────────────────────────────────────────────── */
+    .container {
+      max-width: 880px;
+      margin: 32px auto;
+      padding: 0 16px 48px;
+      display: grid;
+      gap: 24px;
+    }
+
+    /* ── Card ───────────────────────────────────────────────────── */
+    .card {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px;
+    }
+    .card h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--gray-800);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card h2 .icon { font-size: 1.25rem; }
+
+    /* ── Input Area ─────────────────────────────────────────────── */
+    textarea {
+      width: 100%;
+      min-height: 130px;
+      padding: 14px 16px;
+      border: 2px solid var(--gray-200);
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: inherit;
+      resize: vertical;
+      transition: border-color .2s;
+      color: var(--gray-800);
+      line-height: 1.6;
+    }
+    textarea:focus { outline: none; border-color: var(--primary); }
+    textarea::placeholder { color: var(--gray-400); }
+
+    .char-count {
+      text-align: right;
+      font-size: .78rem;
+      color: var(--gray-400);
+      margin-top: 6px;
+    }
+
+    /* ── Buttons ────────────────────────────────────────────────── */
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      font-size: .95rem;
+      font-weight: 600;
+      padding: 11px 28px;
+      transition: background .2s, transform .1s;
+    }
+    button:active { transform: scale(.97); }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      flex: 1;
+    }
+    .btn-primary:hover  { background: var(--primary-d); }
+    .btn-primary:disabled { background: var(--gray-400); cursor: not-allowed; }
+
+    .btn-secondary {
+      background: var(--gray-100);
+      color: var(--gray-600);
+      border: 1px solid var(--gray-200);
+    }
+    .btn-secondary:hover { background: var(--gray-200); }
+
+    /* ── Result Box ─────────────────────────────────────────────── */
+    #result-box {
+      display: none;
+      border-radius: 10px;
+      padding: 22px 24px;
+      margin-top: 20px;
+      border: 2px solid transparent;
+      animation: fadeIn .3s ease;
+    }
+    #result-box.spam {
+      background: var(--spam-bg);
+      border-color: #fca5a5;
+    }
+    #result-box.ham {
+      background: var(--ham-bg);
+      border-color: #6ee7b7;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .result-icon { font-size: 2.4rem; line-height: 1; }
+    .result-label {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    .result-box.spam .result-label { color: var(--spam); }
+    .result-box.ham  .result-label { color: var(--ham);  }
+    #result-box.spam .result-label { color: var(--spam); }
+    #result-box.ham  .result-label { color: var(--ham);  }
+
+    .result-sub {
+      font-size: .88rem;
+      color: var(--gray-600);
+      margin-top: 2px;
+    }
+
+    /* confidence bar */
+    .conf-bar-wrap {
+      margin-top: 14px;
+    }
+    .conf-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: .82rem;
+      color: var(--gray-600);
+      margin-bottom: 6px;
+    }
+    .conf-bar-bg {
+      height: 10px;
+      background: var(--gray-200);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .conf-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width .6s ease;
+    }
+    #result-box.spam .conf-bar-fill { background: var(--spam); }
+    #result-box.ham  .conf-bar-fill { background: var(--ham);  }
+
+    .cleaned-text {
+      margin-top: 14px;
+      background: rgba(0,0,0,.04);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: .82rem;
+      color: var(--gray-600);
+      word-break: break-word;
+    }
+    .cleaned-text strong { color: var(--gray-800); }
+
+    /* ── Stats Bar ──────────────────────────────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+    }
+    .stat-item {
+      text-align: center;
+      padding: 16px;
+      background: var(--gray-50);
+      border-radius: 10px;
+      border: 1px solid var(--gray-200);
+    }
+    .stat-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .stat-label {
+      font-size: .78rem;
+      color: var(--gray-400);
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    /* ── History Table ──────────────────────────────────────────── */
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .history-header h2 { margin-bottom: 0; }
+
+    #history-list { display: grid; gap: 10px; }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--gray-200);
+      background: var(--gray-50);
+      font-size: .9rem;
+    }
+    .history-item .badge {
+      flex-shrink: 0;
+      font-size: .75rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      text-transform: uppercase;
+    }
+    .badge.spam { background: #fee2e2; color: var(--spam); }
+    .badge.ham  { background: #d1fae5; color: var(--ham);  }
+    .history-msg {
+      flex: 1;
+      color: var(--gray-600);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .history-time {
+      flex-shrink: 0;
+      font-size: .75rem;
+      color: var(--gray-400);
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--gray-400);
+      padding: 24px;
+      font-size: .9rem;
+    }
+
+    /* ── Sample Messages ────────────────────────────────────────── */
+    .sample-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 560px) { .sample-grid { grid-template-columns: 1fr; } }
+
+    .sample-btn {
+      text-align: left;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: .82rem;
+      font-weight: 400;
+      white-space: normal;
+      line-height: 1.4;
+      border: 1px solid var(--gray-200) !important;
+    }
+    .sample-btn.spam-sample {
+      background: #fff5f5;
+      color: #7f1d1d;
+      border-color: #fca5a5 !important;
+    }
+    .sample-btn.ham-sample {
+      background: #f0fdf4;
+      color: #14532d;
+      border-color: #6ee7b7 !important;
+    }
+    .sample-btn:hover { opacity: .85; }
+
+    /* ── Loading spinner ────────────────────────────────────────── */
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 3px solid rgba(255,255,255,.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Footer ─────────────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 16px;
+      font-size: .8rem;
+      color: var(--gray-400);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────────────── -->
+<header>
+  <h1>🛡️ Spam Message Detection System</h1>
+  <p>NLP + Machine Learning · Aditya University · CSE NLP Project</p>
+</header>
+
+<!-- ── Main ────────────────────────────────────────────────────────────────── -->
+<div class="container">
+
+  <!-- Model Stats -->
+  {% if model_info %}
+  <div class="card">
+    <h2><span class="icon">📊</span> Model Performance</h2>
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-value">{{ (model_info.accuracy * 100) | round(1) }}%</div>
+        <div class="stat-label">Accuracy</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">{{ (model_info.precision * 100) | round(1) }}%</div>
+        <div class="stat-label">Precision</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">{{ (model_info.recall * 100) | round(1) }}%</div>
+        <div class="stat-label">Recall</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">{{ (model_info.f1_score * 100) | round(1) }}%</div>
+        <div class="stat-label">F1 Score</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">{{ model_info.vocab_size }}</div>
+        <div class="stat-label">Vocabulary</div>
+      </div>
+      <div class="stat-item" style="grid-column: span 1;">
+        <div class="stat-value" style="font-size:1rem; margin-top:4px;">
+          {{ model_info.model_name | truncate(22, True) }}
+        </div>
+        <div class="stat-label">Algorithm</div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Classify Card -->
+  <div class="card">
+    <h2><span class="icon">🔍</span> Classify a Message</h2>
+
+    <textarea id="msg-input"
+              placeholder="Paste or type an SMS / email message here to check if it's spam..."
+              maxlength="1000"
+              oninput="updateCount()"></textarea>
+    <div class="char-count"><span id="char-count">0</span> / 1000</div>
+
+    <div class="btn-row">
+      <button class="btn-primary" id="classify-btn" onclick="classifyMessage()">
+        🔎 Check Message
+      </button>
+      <button class="btn-secondary" onclick="clearAll()">Clear</button>
+    </div>
+
+    <!-- Result -->
+    <div id="result-box">
+      <div class="result-header">
+        <div class="result-icon" id="result-icon"></div>
+        <div>
+          <div class="result-label" id="result-label"></div>
+          <div class="result-sub"  id="result-sub"></div>
+        </div>
+      </div>
+      <div class="conf-bar-wrap">
+        <div class="conf-label">
+          <span>Confidence</span>
+          <span id="conf-value"></span>
+        </div>
+        <div class="conf-bar-bg">
+          <div class="conf-bar-fill" id="conf-bar" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="cleaned-text" id="cleaned-text"></div>
+    </div>
+  </div>
+
+  <!-- Sample Messages -->
+  <div class="card">
+    <h2><span class="icon">💡</span> Try Sample Messages</h2>
+    <div class="sample-grid">
+      <button class="sample-btn spam-sample btn-secondary"
+        onclick="loadSample(`Congratulations! You've won a FREE iPhone 14! Click here to claim your prize: http://win-prize.xyz`)">
+        🚨 Congratulations! You've won a FREE iPhone 14! Click to claim...
+      </button>
+      <button class="sample-btn ham-sample btn-secondary"
+        onclick="loadSample(`Hey, are you coming to the meeting tomorrow at 10am? Please confirm.`)">
+        ✅ Hey, are you coming to the meeting tomorrow at 10am?
+      </button>
+      <button class="sample-btn spam-sample btn-secondary"
+        onclick="loadSample(`URGENT: Your bank account has been compromised. Verify your details at http://secure-bank-verify.net`)">
+        🚨 URGENT: Your bank account has been compromised. Verify now!
+      </button>
+      <button class="sample-btn ham-sample btn-secondary"
+        onclick="loadSample(`Can you pick up some groceries on your way home? We need milk and eggs.`)">
+        ✅ Can you pick up some groceries on your way home?
+      </button>
+      <button class="sample-btn spam-sample btn-secondary"
+        onclick="loadSample(`You have been selected for a $1000 Walmart gift card. Reply YES to claim your reward now!`)">
+        🚨 You have been selected for a $1000 Walmart gift card!
+      </button>
+      <button class="sample-btn ham-sample btn-secondary"
+        onclick="loadSample(`The report is done. I'll send it to you by end of the day. Let me know if you need changes.`)">
+        ✅ The report is done. I'll send it to you by end of the day.
+      </button>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="card">
+    <div class="history-header">
+      <h2><span class="icon">🕓</span> Recent Predictions</h2>
+      <button class="btn-secondary" style="padding:6px 16px; font-size:.82rem;"
+              onclick="clearHistory()">Clear</button>
+    </div>
+    <div id="history-list">
+      <div class="empty-state" id="history-empty">No predictions yet. Check a message above!</div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  P. Rohith · V. Sri Ramcharan · T.S.N. Srikhar Reddy &nbsp;|&nbsp; Aditya University &nbsp;|&nbsp; NLP Project
+</footer>
+
+<!-- ── JavaScript ───────────────────────────────────────────────────────────── -->
+<script>
+  // ── Character counter ──────────────────────────────────────────────────────
+  function updateCount() {
+    const len = document.getElementById("msg-input").value.length;
+    document.getElementById("char-count").textContent = len;
+  }
+
+  // ── Load a sample message ──────────────────────────────────────────────────
+  function loadSample(text) {
+    document.getElementById("msg-input").value = text;
+    updateCount();
+    classifyMessage();
+  }
+
+  // ── Clear everything ───────────────────────────────────────────────────────
+  function clearAll() {
+    document.getElementById("msg-input").value = "";
+    updateCount();
+    const box = document.getElementById("result-box");
+    box.style.display = "none";
+  }
+
+  // ── Main classify function ─────────────────────────────────────────────────
+  async function classifyMessage() {
+    const input = document.getElementById("msg-input");
+    const msg   = input.value.trim();
+    if (!msg) { input.focus(); return; }
+
+    // Show loading state
+    const btn = document.getElementById("classify-btn");
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Analyzing…';
+
+    try {
+      const res  = await fetch("/predict", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ message: msg }),
+      });
+      const data = await res.json();
+
+      if (data.error) { alert(data.error); return; }
+
+      showResult(data);
+      loadHistory();
+
+    } catch (err) {
+      alert("Server error. Make sure app.py is running.");
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = "🔎 Check Message";
+    }
+  }
+
+  // ── Render result ──────────────────────────────────────────────────────────
+  function showResult(data) {
+    const box    = document.getElementById("result-box");
+    const isSpam = data.is_spam;
+
+    box.className   = isSpam ? "spam" : "ham";
+    box.style.display = "block";
+
+    document.getElementById("result-icon").textContent  = isSpam ? "🚨" : "✅";
+    document.getElementById("result-label").textContent = isSpam ? "SPAM Detected" : "Legitimate Message";
+    document.getElementById("result-sub").textContent   =
+      isSpam
+        ? "This message looks suspicious. Do not click any links."
+        : "This message appears to be safe and legitimate.";
+
+    const conf = data.confidence;
+    document.getElementById("conf-value").textContent   = conf + "%";
+    document.getElementById("conf-bar").style.width     = conf + "%";
+
+    document.getElementById("cleaned-text").innerHTML =
+      `<strong>Preprocessed tokens:</strong> ${data.cleaned || "(empty after cleaning)"}`;
+
+    // Scroll result into view
+    box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  // ── Load prediction history ────────────────────────────────────────────────
+  async function loadHistory() {
+    const res  = await fetch("/history");
+    const data = await res.json();
+    const list = document.getElementById("history-list");
+    const empty = document.getElementById("history-empty");
+
+    if (!data.length) {
+      if (empty) empty.style.display = "block";
+      return;
+    }
+    if (empty) empty.style.display = "none";
+
+    list.innerHTML = data.map(item => `
+      <div class="history-item">
+        <span class="badge ${item.is_spam ? 'spam' : 'ham'}">
+          ${item.is_spam ? 'Spam' : 'Ham'}
+        </span>
+        <span class="history-msg" title="${escHtml(item.message)}">
+          ${escHtml(item.message)}
+        </span>
+        <span class="history-time">${item.time}</span>
+      </div>
+    `).join("");
+  }
+
+  // ── Clear history ──────────────────────────────────────────────────────────
+  async function clearHistory() {
+    await fetch("/clear-history", { method: "POST" });
+    document.getElementById("history-list").innerHTML =
+      '<div class="empty-state" id="history-empty">No predictions yet. Check a message above!</div>';
+    const box = document.getElementById("result-box");
+    box.style.display = "none";
+  }
+
+  // ── Escape HTML to prevent XSS ─────────────────────────────────────────────
+  function escHtml(str) {
+    return str.replace(/&/g,"&amp;").replace(/</g,"&lt;")
+              .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+
+  // ── Allow Ctrl+Enter to submit ─────────────────────────────────────────────
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("msg-input").addEventListener("keydown", e => {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) classifyMessage();
+    });
+    loadHistory();
+  });
+</script>
+
+</body>
+</html>
