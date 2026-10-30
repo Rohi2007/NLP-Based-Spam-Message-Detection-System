@@ -5,286 +5,453 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Spam Message Detection System</title>
   <style>
-    /* ── Reset & Base ───────────────────────────────────────────── */
+    /* ── Google Font ──────────────────────────────────────────── */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* ── Theme Tokens ─────────────────────────────────────────── */
     :root {
-      --primary:   #1a56db;
-      --primary-d: #1342b0;
-      --spam:      #e02424;
-      --spam-bg:   #fff5f5;
-      --ham:       #057a55;
-      --ham-bg:    #f0fdf4;
-      --gray-50:   #f9fafb;
-      --gray-100:  #f3f4f6;
-      --gray-200:  #e5e7eb;
-      --gray-400:  #9ca3af;
-      --gray-600:  #4b5563;
-      --gray-800:  #1f2937;
-      --shadow:    0 4px 24px rgba(0,0,0,.08);
-      --radius:    12px;
+      --primary:        #4f46e5;
+      --primary-d:      #3730a3;
+      --primary-glow:   rgba(79,70,229,.35);
+
+      /* SPAM = DANGEROUS */
+      --danger:         #dc2626;
+      --danger-d:       #991b1b;
+      --danger-bg:      #1a0505;
+      --danger-card:    #2d0a0a;
+      --danger-border:  #7f1d1d;
+      --danger-glow:    rgba(220,38,38,.5);
+
+      /* HAM = PEACEFUL */
+      --peace:          #059669;
+      --peace-d:        #065f46;
+      --peace-bg:       #021a10;
+      --peace-card:     #042f1e;
+      --peace-border:   #064e3b;
+      --peace-glow:     rgba(5,150,105,.45);
+
+      --surface:        #0f0f1a;
+      --surface-2:      #16162a;
+      --surface-3:      #1e1e35;
+      --border:         #2e2e4a;
+      --text:           #e8e8f0;
+      --text-muted:     #8888aa;
+      --shadow:         0 8px 32px rgba(0,0,0,.5);
+      --radius:         16px;
     }
 
     body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: var(--gray-100);
-      color: var(--gray-800);
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      background: var(--surface);
+      color: var(--text);
       min-height: 100vh;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 20% -10%, rgba(79,70,229,.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 110%, rgba(5,150,105,.08) 0%, transparent 60%);
     }
+
+    /* ── Scrollbar ────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--surface-2); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
 
     /* ── Header ─────────────────────────────────────────────────── */
     header {
-      background: linear-gradient(135deg, #1a56db 0%, #0d47a1 100%);
-      color: #fff;
-      padding: 28px 24px 24px;
+      background: linear-gradient(135deg, #1a1a3e 0%, #0f0f1a 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 28px 24px 22px;
       text-align: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,.2);
+      position: relative;
+      overflow: hidden;
     }
-    header h1 { font-size: 1.9rem; font-weight: 700; letter-spacing: -.5px; }
-    header p  { margin-top: 6px; opacity: .85; font-size: .95rem; }
+    header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 100% at 50% 0%, rgba(79,70,229,.2) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .header-inner { position: relative; z-index: 1; }
+    header h1 {
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: -1px;
+      background: linear-gradient(90deg, #818cf8 0%, #a78bfa 50%, #67e8f9 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    header p {
+      margin-top: 8px;
+      color: var(--text-muted);
+      font-size: .9rem;
+    }
+    /* floating spam-type decorative stickers in header */
+    .header-stickers {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+    .sticker {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: .72rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+      border: 1px solid;
+      animation: floatSticker 3s ease-in-out infinite;
+    }
+    .sticker:nth-child(2) { animation-delay: .4s; }
+    .sticker:nth-child(3) { animation-delay: .8s; }
+    .sticker:nth-child(4) { animation-delay: 1.2s; }
+    .sticker:nth-child(5) { animation-delay: 1.6s; }
+    .sticker:nth-child(6) { animation-delay: 2s; }
+    @keyframes floatSticker {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-4px); }
+    }
+    .sticker-phish  { background: rgba(239,68,68,.15);  color: #f87171; border-color: rgba(239,68,68,.4); }
+    .sticker-prize  { background: rgba(234,179,8,.15);  color: #fbbf24; border-color: rgba(234,179,8,.4); }
+    .sticker-loan   { background: rgba(168,85,247,.15); color: #c084fc; border-color: rgba(168,85,247,.4); }
+    .sticker-threat { background: rgba(239,68,68,.2);   color: #fc8181; border-color: rgba(239,68,68,.5); }
+    .sticker-crypto { background: rgba(251,146,60,.15); color: #fb923c; border-color: rgba(251,146,60,.4); }
+    .sticker-fake   { background: rgba(99,102,241,.15); color: #818cf8; border-color: rgba(99,102,241,.4); }
 
-    /* ── Layout ─────────────────────────────────────────────────── */
+    /* ── Layout ──────────────────────────────────────────────────── */
     .container {
-      max-width: 880px;
+      max-width: 900px;
       margin: 32px auto;
-      padding: 0 16px 48px;
+      padding: 0 16px 64px;
       display: grid;
       gap: 24px;
     }
 
-    /* ── Card ───────────────────────────────────────────────────── */
+    /* ── Card ────────────────────────────────────────────────────── */
     .card {
-      background: #fff;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       padding: 28px;
+      transition: border-color .3s;
     }
+    .card:hover { border-color: rgba(79,70,229,.4); }
     .card h2 {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: var(--gray-800);
-      margin-bottom: 18px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .card h2 .icon { font-size: 1.25rem; }
-
-    /* ── Input Area ─────────────────────────────────────────────── */
-    textarea {
-      width: 100%;
-      min-height: 130px;
-      padding: 14px 16px;
-      border: 2px solid var(--gray-200);
-      border-radius: 8px;
       font-size: 1rem;
-      font-family: inherit;
-      resize: vertical;
-      transition: border-color .2s;
-      color: var(--gray-800);
-      line-height: 1.6;
-    }
-    textarea:focus { outline: none; border-color: var(--primary); }
-    textarea::placeholder { color: var(--gray-400); }
-
-    .char-count {
-      text-align: right;
-      font-size: .78rem;
-      color: var(--gray-400);
-      margin-top: 6px;
-    }
-
-    /* ── Buttons ────────────────────────────────────────────────── */
-    .btn-row {
-      display: flex;
-      gap: 12px;
-      margin-top: 16px;
-    }
-    button {
-      cursor: pointer;
-      border: none;
-      border-radius: 8px;
-      font-size: .95rem;
-      font-weight: 600;
-      padding: 11px 28px;
-      transition: background .2s, transform .1s;
-    }
-    button:active { transform: scale(.97); }
-
-    .btn-primary {
-      background: var(--primary);
-      color: #fff;
-      flex: 1;
-    }
-    .btn-primary:hover  { background: var(--primary-d); }
-    .btn-primary:disabled { background: var(--gray-400); cursor: not-allowed; }
-
-    .btn-secondary {
-      background: var(--gray-100);
-      color: var(--gray-600);
-      border: 1px solid var(--gray-200);
-    }
-    .btn-secondary:hover { background: var(--gray-200); }
-
-    /* ── Result Box ─────────────────────────────────────────────── */
-    #result-box {
-      display: none;
-      border-radius: 10px;
-      padding: 22px 24px;
-      margin-top: 20px;
-      border: 2px solid transparent;
-      animation: fadeIn .3s ease;
-    }
-    #result-box.spam {
-      background: var(--spam-bg);
-      border-color: #fca5a5;
-    }
-    #result-box.ham {
-      background: var(--ham-bg);
-      border-color: #6ee7b7;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .result-header {
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 20px;
       display: flex;
       align-items: center;
-      gap: 14px;
-      margin-bottom: 14px;
+      gap: 10px;
+      text-transform: uppercase;
+      letter-spacing: .6px;
     }
-    .result-icon { font-size: 2.4rem; line-height: 1; }
-    .result-label {
-      font-size: 1.5rem;
-      font-weight: 700;
-    }
-    .result-box.spam .result-label { color: var(--spam); }
-    .result-box.ham  .result-label { color: var(--ham);  }
-    #result-box.spam .result-label { color: var(--spam); }
-    #result-box.ham  .result-label { color: var(--ham);  }
-
-    .result-sub {
-      font-size: .88rem;
-      color: var(--gray-600);
-      margin-top: 2px;
+    .card h2 .icon {
+      font-size: 1.2rem;
+      background: var(--surface-3);
+      padding: 6px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
     }
 
-    /* confidence bar */
-    .conf-bar-wrap {
-      margin-top: 14px;
-    }
-    .conf-label {
-      display: flex;
-      justify-content: space-between;
-      font-size: .82rem;
-      color: var(--gray-600);
-      margin-bottom: 6px;
-    }
-    .conf-bar-bg {
-      height: 10px;
-      background: var(--gray-200);
-      border-radius: 999px;
-      overflow: hidden;
-    }
-    .conf-bar-fill {
-      height: 100%;
-      border-radius: 999px;
-      transition: width .6s ease;
-    }
-    #result-box.spam .conf-bar-fill { background: var(--spam); }
-    #result-box.ham  .conf-bar-fill { background: var(--ham);  }
-
-    .cleaned-text {
-      margin-top: 14px;
-      background: rgba(0,0,0,.04);
-      border-radius: 6px;
-      padding: 10px 14px;
-      font-size: .82rem;
-      color: var(--gray-600);
-      word-break: break-word;
-    }
-    .cleaned-text strong { color: var(--gray-800); }
-
-    /* ── Stats Bar ──────────────────────────────────────────────── */
+    /* ── Model Stats ─────────────────────────────────────────────── */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 14px;
     }
     .stat-item {
       text-align: center;
-      padding: 16px;
-      background: var(--gray-50);
-      border-radius: 10px;
-      border: 1px solid var(--gray-200);
+      padding: 18px 10px;
+      background: var(--surface-3);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-item::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary), #a78bfa);
     }
     .stat-value {
-      font-size: 1.6rem;
-      font-weight: 700;
-      color: var(--primary);
+      font-size: 1.7rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #818cf8, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
     .stat-label {
-      font-size: .78rem;
-      color: var(--gray-400);
+      font-size: .7rem;
+      color: var(--text-muted);
       margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      font-weight: 600;
+    }
+
+    /* ── Textarea ────────────────────────────────────────────────── */
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      padding: 16px 18px;
+      background: var(--surface-3);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 1rem;
+      font-family: inherit;
+      resize: vertical;
+      transition: border-color .2s, box-shadow .2s;
+      color: var(--text);
+      line-height: 1.7;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+    textarea::placeholder { color: var(--text-muted); }
+
+    .char-count {
+      text-align: right;
+      font-size: .75rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* ── Buttons ─────────────────────────────────────────────────── */
+    .btn-row { display: flex; gap: 12px; margin-top: 18px; }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      font-size: .92rem;
+      font-weight: 700;
+      padding: 13px 28px;
+      transition: all .2s;
+      font-family: inherit;
+    }
+    button:active { transform: scale(.96); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+      color: #fff;
+      flex: 1;
+      box-shadow: 0 4px 16px var(--primary-glow);
+    }
+    .btn-primary:hover { box-shadow: 0 6px 24px var(--primary-glow); filter: brightness(1.1); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; filter: none; }
+
+    .btn-secondary {
+      background: var(--surface-3);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: var(--border); color: var(--text); }
+
+    /* ══════════════════════════════════════════════════════════════
+       RESULT BOX — the heart of the redesign
+    ══════════════════════════════════════════════════════════════ */
+    #result-box {
+      display: none;
+      border-radius: 14px;
+      padding: 0;
+      margin-top: 24px;
+      border: 2px solid transparent;
+      animation: resultReveal .45s cubic-bezier(.22,1,.36,1);
+      overflow: hidden;
+    }
+    @keyframes resultReveal {
+      from { opacity: 0; transform: translateY(14px) scale(.97); }
+      to   { opacity: 1; transform: translateY(0)    scale(1); }
+    }
+
+    /* ── SPAM = DANGEROUS ── */
+    #result-box.spam {
+      background: var(--danger-card);
+      border-color: var(--danger-border);
+      box-shadow: 0 0 40px var(--danger-glow), 0 8px 24px rgba(0,0,0,.6);
+    }
+
+    /* ── HAM = PEACEFUL ── */
+    #result-box.ham {
+      background: var(--peace-card);
+      border-color: var(--peace-border);
+      box-shadow: 0 0 40px var(--peace-glow), 0 8px 24px rgba(0,0,0,.6);
+    }
+
+    /* Top accent strip */
+    .result-accent {
+      height: 4px;
+      width: 100%;
+    }
+    #result-box.spam .result-accent {
+      background: linear-gradient(90deg, #dc2626, #f87171, #dc2626);
+      background-size: 200% 100%;
+      animation: accentSlide 2s linear infinite;
+    }
+    #result-box.ham .result-accent {
+      background: linear-gradient(90deg, #059669, #34d399, #059669);
+      background-size: 200% 100%;
+      animation: accentSlide 2s linear infinite;
+    }
+    @keyframes accentSlide {
+      0%   { background-position: 0% 0%; }
+      100% { background-position: 200% 0%; }
+    }
+
+    .result-inner { padding: 24px 26px 22px; }
+
+    /* Big verdict section */
+    .verdict {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+    .verdict-emoji {
+      font-size: 3.5rem;
+      line-height: 1;
+      flex-shrink: 0;
+      filter: drop-shadow(0 0 12px currentColor);
+      animation: pulseIcon 2s ease-in-out infinite;
+    }
+    @keyframes pulseIcon {
+      0%,100% { transform: scale(1); }
+      50%      { transform: scale(1.08); }
+    }
+    .verdict-text {}
+    .verdict-label {
+      font-size: 1.9rem;
+      font-weight: 900;
+      letter-spacing: -1px;
+      line-height: 1.1;
+    }
+    #result-box.spam .verdict-label {
+      background: linear-gradient(135deg, #f87171, #fca5a5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    #result-box.ham .verdict-label {
+      background: linear-gradient(135deg, #34d399, #6ee7b7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .verdict-sub {
+      font-size: .9rem;
+      margin-top: 6px;
+      font-weight: 500;
+    }
+    #result-box.spam .verdict-sub { color: #fca5a5; }
+    #result-box.ham  .verdict-sub { color: #6ee7b7; }
+
+    /* Spam-type sticker tags on the result */
+    .result-stickers {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .rs-tag {
+      font-size: .72rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 999px;
+      border: 1px solid;
       text-transform: uppercase;
       letter-spacing: .5px;
     }
+    /* spam tags */
+    #result-box.spam .rs-tag {
+      background: rgba(220,38,38,.2);
+      color: #fca5a5;
+      border-color: rgba(220,38,38,.5);
+    }
+    /* ham tags */
+    #result-box.ham .rs-tag {
+      background: rgba(5,150,105,.2);
+      color: #6ee7b7;
+      border-color: rgba(5,150,105,.5);
+    }
 
-    /* ── History Table ──────────────────────────────────────────── */
-    .history-header {
+    /* Confidence bar */
+    .conf-section { margin-bottom: 16px; }
+    .conf-row {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
+      font-size: .8rem;
+      font-weight: 600;
+      margin-bottom: 8px;
     }
-    .history-header h2 { margin-bottom: 0; }
+    #result-box.spam .conf-row { color: #f87171; }
+    #result-box.ham  .conf-row { color: #34d399; }
 
-    #history-list { display: grid; gap: 10px; }
-
-    .history-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 14px;
-      border-radius: 8px;
-      border: 1px solid var(--gray-200);
-      background: var(--gray-50);
-      font-size: .9rem;
-    }
-    .history-item .badge {
-      flex-shrink: 0;
-      font-size: .75rem;
-      font-weight: 700;
-      padding: 3px 10px;
+    .conf-track {
+      height: 10px;
+      background: rgba(255,255,255,.08);
       border-radius: 999px;
-      text-transform: uppercase;
-    }
-    .badge.spam { background: #fee2e2; color: var(--spam); }
-    .badge.ham  { background: #d1fae5; color: var(--ham);  }
-    .history-msg {
-      flex: 1;
-      color: var(--gray-600);
       overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
-    .history-time {
-      flex-shrink: 0;
-      font-size: .75rem;
-      color: var(--gray-400);
+    .conf-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width .8s cubic-bezier(.22,1,.36,1);
+    }
+    #result-box.spam .conf-fill {
+      background: linear-gradient(90deg, #dc2626, #f87171);
+      box-shadow: 0 0 8px rgba(220,38,38,.7);
+    }
+    #result-box.ham .conf-fill {
+      background: linear-gradient(90deg, #059669, #34d399);
+      box-shadow: 0 0 8px rgba(5,150,105,.7);
     }
 
-    .empty-state {
-      text-align: center;
-      color: var(--gray-400);
-      padding: 24px;
-      font-size: .9rem;
+    /* Warning / tips box */
+    .result-warning {
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: .84rem;
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+    #result-box.spam .result-warning {
+      background: rgba(220,38,38,.12);
+      border: 1px solid rgba(220,38,38,.3);
+      color: #fca5a5;
+    }
+    #result-box.ham .result-warning {
+      background: rgba(5,150,105,.12);
+      border: 1px solid rgba(5,150,105,.3);
+      color: #6ee7b7;
     }
 
-    /* ── Sample Messages ────────────────────────────────────────── */
+    .cleaned-text {
+      background: rgba(255,255,255,.05);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: .78rem;
+      color: var(--text-muted);
+      word-break: break-word;
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    .cleaned-text strong { color: var(--text); }
+
+    /* ── Sample Messages ─────────────────────────────────────────── */
     .sample-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -294,57 +461,187 @@
 
     .sample-btn {
       text-align: left;
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: .82rem;
-      font-weight: 400;
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: .8rem;
+      font-weight: 500;
       white-space: normal;
-      line-height: 1.4;
-      border: 1px solid var(--gray-200) !important;
+      line-height: 1.5;
+      transition: all .2s;
     }
-    .sample-btn.spam-sample {
-      background: #fff5f5;
-      color: #7f1d1d;
-      border-color: #fca5a5 !important;
-    }
-    .sample-btn.ham-sample {
-      background: #f0fdf4;
-      color: #14532d;
-      border-color: #6ee7b7 !important;
-    }
-    .sample-btn:hover { opacity: .85; }
+    .sample-btn:hover { transform: translateY(-2px); }
 
-    /* ── Loading spinner ────────────────────────────────────────── */
+    .spam-sample {
+      background: rgba(220,38,38,.08) !important;
+      color: #fca5a5 !important;
+      border: 1px solid rgba(220,38,38,.3) !important;
+    }
+    .spam-sample:hover {
+      background: rgba(220,38,38,.15) !important;
+      box-shadow: 0 4px 16px rgba(220,38,38,.2);
+    }
+
+    .ham-sample {
+      background: rgba(5,150,105,.08) !important;
+      color: #6ee7b7 !important;
+      border: 1px solid rgba(5,150,105,.3) !important;
+    }
+    .ham-sample:hover {
+      background: rgba(5,150,105,.15) !important;
+      box-shadow: 0 4px 16px rgba(5,150,105,.2);
+    }
+
+    .sample-category {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: .67rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-bottom: 5px;
+    }
+    .spam-sample .sample-category {
+      background: rgba(220,38,38,.2);
+      color: #f87171;
+      border: 1px solid rgba(220,38,38,.4);
+    }
+    .ham-sample .sample-category {
+      background: rgba(5,150,105,.2);
+      color: #34d399;
+      border: 1px solid rgba(5,150,105,.4);
+    }
+
+    /* ── History ─────────────────────────────────────────────────── */
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .history-header h2 { margin-bottom: 0; }
+
+    #history-list { display: grid; gap: 8px; }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface-3);
+      font-size: .88rem;
+      transition: border-color .2s;
+    }
+    .history-item:hover { border-color: rgba(79,70,229,.4); }
+
+    .h-badge {
+      flex-shrink: 0;
+      font-size: .68rem;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .h-badge.spam {
+      background: rgba(220,38,38,.2);
+      color: #f87171;
+      border: 1px solid rgba(220,38,38,.4);
+    }
+    .h-badge.ham {
+      background: rgba(5,150,105,.2);
+      color: #34d399;
+      border: 1px solid rgba(5,150,105,.4);
+    }
+
+    .history-msg {
+      flex: 1;
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .history-conf {
+      flex-shrink: 0;
+      font-size: .72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .history-time {
+      flex-shrink: 0;
+      font-size: .72rem;
+      color: var(--text-muted);
+      opacity: .6;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 32px;
+      font-size: .88rem;
+      opacity: .6;
+    }
+
+    /* ── Spinner ─────────────────────────────────────────────────── */
     .spinner {
       display: inline-block;
-      width: 18px; height: 18px;
-      border: 3px solid rgba(255,255,255,.4);
+      width: 16px; height: 16px;
+      border: 2.5px solid rgba(255,255,255,.3);
       border-top-color: #fff;
       border-radius: 50%;
-      animation: spin .7s linear infinite;
+      animation: spin .65s linear infinite;
       vertical-align: middle;
-      margin-right: 6px;
+      margin-right: 7px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ── Footer ─────────────────────────────────────────────────── */
     footer {
       text-align: center;
-      padding: 16px;
-      font-size: .8rem;
-      color: var(--gray-400);
+      padding: 20px 16px;
+      font-size: .78rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+      margin-top: 8px;
+      opacity: .7;
+    }
+
+    /* ── Responsive ──────────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      header h1 { font-size: 1.4rem; }
+      .verdict-label { font-size: 1.4rem; }
+      .verdict-emoji { font-size: 2.5rem; }
+      .btn-row { flex-direction: column; }
+      .stat-value { font-size: 1.3rem; }
     }
   </style>
 </head>
 <body>
 
-<!-- ── Header ──────────────────────────────────────────────────────────────── -->
+<!-- ── Header ──────────────────────────────────────────────────────────── -->
 <header>
-  <h1>🛡️ Spam Message Detection System</h1>
-  <p>NLP + Machine Learning · Aditya University · CSE NLP Project</p>
+  <div class="header-inner">
+    <h1>🛡️ Spam Message Detection</h1>
+    <p>NLP + Machine Learning · Aditya University · CSE Project</p>
+    <div class="header-stickers">
+      <span class="sticker sticker-phish">🎣 Phishing</span>
+      <span class="sticker sticker-prize">🎰 Lottery Scam</span>
+      <span class="sticker sticker-loan">💸 Loan Fraud</span>
+      <span class="sticker sticker-threat">☠️ Threat</span>
+      <span class="sticker sticker-crypto">₿ Crypto Scam</span>
+      <span class="sticker sticker-fake">🏛️ Fake Govt</span>
+    </div>
+  </div>
 </header>
 
-<!-- ── Main ────────────────────────────────────────────────────────────────── -->
+<!-- ── Main ────────────────────────────────────────────────────────────── -->
 <div class="container">
 
   <!-- Model Stats -->
@@ -372,9 +669,9 @@
         <div class="stat-value">{{ model_info.vocab_size }}</div>
         <div class="stat-label">Vocabulary</div>
       </div>
-      <div class="stat-item" style="grid-column: span 1;">
-        <div class="stat-value" style="font-size:1rem; margin-top:4px;">
-          {{ model_info.model_name | truncate(22, True) }}
+      <div class="stat-item">
+        <div class="stat-value" style="font-size:.85rem; margin-top:4px; -webkit-text-fill-color: unset; color: #818cf8;">
+          {{ model_info.model_name | truncate(18, True) }}
         </div>
         <div class="stat-label">Algorithm</div>
       </div>
@@ -387,37 +684,53 @@
     <h2><span class="icon">🔍</span> Classify a Message</h2>
 
     <textarea id="msg-input"
-              placeholder="Paste or type an SMS / email message here to check if it's spam..."
+              placeholder="Paste or type an SMS / email message here to check if it's spam…"
               maxlength="1000"
               oninput="updateCount()"></textarea>
-    <div class="char-count"><span id="char-count">0</span> / 1000</div>
+    <div class="char-count"><span id="char-count">0</span> / 1000 · Ctrl+Enter to check</div>
 
     <div class="btn-row">
       <button class="btn-primary" id="classify-btn" onclick="classifyMessage()">
-        🔎 Check Message
+        🔎 Analyze Message
       </button>
-      <button class="btn-secondary" onclick="clearAll()">Clear</button>
+      <button class="btn-secondary" onclick="clearAll()">✕ Clear</button>
     </div>
 
-    <!-- Result -->
+    <!-- ── Result ─────────────────────────────────────────────── -->
     <div id="result-box">
-      <div class="result-header">
-        <div class="result-icon" id="result-icon"></div>
-        <div>
-          <div class="result-label" id="result-label"></div>
-          <div class="result-sub"  id="result-sub"></div>
+      <div class="result-accent"></div>
+      <div class="result-inner">
+
+        <!-- Verdict -->
+        <div class="verdict">
+          <div class="verdict-emoji" id="result-emoji"></div>
+          <div class="verdict-text">
+            <div class="verdict-label" id="result-label"></div>
+            <div class="verdict-sub"   id="result-sub"></div>
+          </div>
         </div>
+
+        <!-- Dynamic sticker tags -->
+        <div class="result-stickers" id="result-stickers"></div>
+
+        <!-- Confidence bar -->
+        <div class="conf-section">
+          <div class="conf-row">
+            <span>Detection Confidence</span>
+            <span id="conf-value"></span>
+          </div>
+          <div class="conf-track">
+            <div class="conf-fill" id="conf-bar" style="width:0%"></div>
+          </div>
+        </div>
+
+        <!-- Warning / reassurance -->
+        <div class="result-warning" id="result-warning"></div>
+
+        <!-- Cleaned tokens -->
+        <div class="cleaned-text" id="cleaned-text"></div>
+
       </div>
-      <div class="conf-bar-wrap">
-        <div class="conf-label">
-          <span>Confidence</span>
-          <span id="conf-value"></span>
-        </div>
-        <div class="conf-bar-bg">
-          <div class="conf-bar-fill" id="conf-bar" style="width:0%"></div>
-        </div>
-      </div>
-      <div class="cleaned-text" id="cleaned-text"></div>
     </div>
   </div>
 
@@ -425,30 +738,55 @@
   <div class="card">
     <h2><span class="icon">💡</span> Try Sample Messages</h2>
     <div class="sample-grid">
-      <button class="sample-btn spam-sample btn-secondary"
+
+      <button class="sample-btn spam-sample"
         onclick="loadSample(`Congratulations! You've won a FREE iPhone 14! Click here to claim your prize: http://win-prize.xyz`)">
-        🚨 Congratulations! You've won a FREE iPhone 14! Click to claim...
+        <div class="sample-category">🎰 Lottery Scam</div>
+        <div>Congratulations! You've won a FREE iPhone 14! Click to claim…</div>
       </button>
-      <button class="sample-btn ham-sample btn-secondary"
+
+      <button class="sample-btn ham-sample"
         onclick="loadSample(`Hey, are you coming to the meeting tomorrow at 10am? Please confirm.`)">
-        ✅ Hey, are you coming to the meeting tomorrow at 10am?
+        <div class="sample-category">💬 Casual Chat</div>
+        <div>Hey, are you coming to the meeting tomorrow at 10am?</div>
       </button>
-      <button class="sample-btn spam-sample btn-secondary"
+
+      <button class="sample-btn spam-sample"
         onclick="loadSample(`URGENT: Your bank account has been compromised. Verify your details at http://secure-bank-verify.net`)">
-        🚨 URGENT: Your bank account has been compromised. Verify now!
+        <div class="sample-category">🎣 Phishing</div>
+        <div>URGENT: Your bank account has been compromised. Verify now!</div>
       </button>
-      <button class="sample-btn ham-sample btn-secondary"
+
+      <button class="sample-btn ham-sample"
         onclick="loadSample(`Can you pick up some groceries on your way home? We need milk and eggs.`)">
-        ✅ Can you pick up some groceries on your way home?
+        <div class="sample-category">🏠 Family</div>
+        <div>Can you pick up some groceries on your way home?</div>
       </button>
-      <button class="sample-btn spam-sample btn-secondary"
+
+      <button class="sample-btn spam-sample"
         onclick="loadSample(`You have been selected for a $1000 Walmart gift card. Reply YES to claim your reward now!`)">
-        🚨 You have been selected for a $1000 Walmart gift card!
+        <div class="sample-category">🛍️ Fake Offer</div>
+        <div>Selected for a $1000 gift card. Reply YES to claim now!</div>
       </button>
-      <button class="sample-btn ham-sample btn-secondary"
-        onclick="loadSample(`The report is done. I'll send it to you by end of the day. Let me know if you need changes.`)">
-        ✅ The report is done. I'll send it to you by end of the day.
+
+      <button class="sample-btn ham-sample"
+        onclick="loadSample(`The report is done. I will send it to you by end of the day. Let me know if you need changes.`)">
+        <div class="sample-category">💼 Work</div>
+        <div>The report is done. I'll send it to you by end of day.</div>
       </button>
+
+      <button class="sample-btn spam-sample"
+        onclick="loadSample(`We have hacked your device and recorded you. Pay 1500 dollars in Bitcoin or we release the footage.`)">
+        <div class="sample-category">☠️ Extortion</div>
+        <div>We have hacked your device. Pay $1500 in Bitcoin or else…</div>
+      </button>
+
+      <button class="sample-btn ham-sample"
+        onclick="loadSample(`Reminder: Your dentist appointment is tomorrow at 11:30 AM. Please arrive 10 minutes early.`)">
+        <div class="sample-category">📅 Reminder</div>
+        <div>Reminder: Your dentist appointment is tomorrow at 11:30 AM.</div>
+      </button>
+
     </div>
   </div>
 
@@ -456,11 +794,11 @@
   <div class="card">
     <div class="history-header">
       <h2><span class="icon">🕓</span> Recent Predictions</h2>
-      <button class="btn-secondary" style="padding:6px 16px; font-size:.82rem;"
-              onclick="clearHistory()">Clear</button>
+      <button class="btn-secondary" style="padding:7px 16px; font-size:.8rem;"
+              onclick="clearHistory()">Clear All</button>
     </div>
     <div id="history-list">
-      <div class="empty-state" id="history-empty">No predictions yet. Check a message above!</div>
+      <div class="empty-state" id="history-empty">No predictions yet — try a message above!</div>
     </div>
   </div>
 
@@ -470,132 +808,303 @@
   P. Rohith · V. Sri Ramcharan · T.S.N. Srikhar Reddy &nbsp;|&nbsp; Aditya University &nbsp;|&nbsp; NLP Project
 </footer>
 
-<!-- ── JavaScript ───────────────────────────────────────────────────────────── -->
+<!-- ── JavaScript ───────────────────────────────────────────────────── -->
 <script>
-  // ── Character counter ──────────────────────────────────────────────────────
-  function updateCount() {
-    const len = document.getElementById("msg-input").value.length;
-    document.getElementById("char-count").textContent = len;
+  // ── Threat/violence detector (mirrors server-side _THREAT_PATTERNS) ─────────
+  const THREAT_PATTERNS = [
+    /\b(kill|murder|kidnap|abduct|shoot|stab|attack|beat\s*you|beat\s*up|rape|assault|strangle|torture)\b/i,
+    /\b(i\s*(will|am\s*going\s*to|gonna|'ll)\s*(kill|hurt|harm|shoot|stab|attack|destroy|kidnap|murder|rape|f+u+c+k))\b/i,
+    /\b(bomb|blast|explode|detonate|blow\s*up)\b/i,
+    /\b(expose\s*you|leak\s*your|release\s*(the\s*)?(video|photo|footage|pics)|destroy\s*your\s*(life|career|family))\b/i,
+    /\b(you\s*will\s*(die|suffer|regret)|your\s*(life|family).{0,20}(danger|risk|harm|threat))\b/i,
+    /\b(go\s*die|kill\s*yourself|kys|end\s*your\s*life)\b/i,
+    /\bi\s*(want\s*to|wanna)\s*(kill|hurt|harm|kidnap|rape|murder|shoot|stab|attack|f+u+c+k)\b/i,
+  ];
+
+  // ── Profanity / abuse detector (mirrors server-side _PROFANITY_PATTERNS) ───
+  const PROFANITY_PATTERNS = [
+    /\bf+[\*@#!\s]*u+[\*@#!\s]*c+[\*@#!\s]*k+\b/i,
+    /\bfu+k\b/i, /\bfvck\b/i, /\bfook\b/i, /\bfuq\b/i,
+    /\bs+[\*@#!\s]*h+[\*@#!\s]*[i1y]+[\*@#!\s]*t+\b/i,
+    /\ba[\$s][\$s]\b/i, /\b@+s+\b/i, /\ba55\b/i, /\basshole\b/i,
+    /\bb+[\*@#!\s]*i+[\*@#!\s]*t+[\*@#!\s]*c+[\*@#!\s]*h+\b/i,
+    /\bb[i1]tch\b/i, /\bbastard\b/i, /\bba5tard\b/i,
+    /\bd+[\*@#!\s]*[i1]+[\*@#!\s]*c+[\*@#!\s]*k+\b/i,
+    /\bc+[\*@#!\s]*u+[\*@#!\s]*n+[\*@#!\s]*t+\b/i,
+    /\bp+[\*@#!\s]*u+[\*@#!\s]*s+[\*@#!\s]*s+[\*@#!\s]*y+\b/i,
+    /\bmother\s*f+[\*@#!\s]*u+[\*@#!\s]*c+[\*@#!\s]*k\w*\b/i,
+    /\bmf\b/i, /\bson\s+of\s+a\s+b[i1]?tch\b/i,
+    /\ba[\-\s]?hole\b/i,
+    /\b(go\s+to\s+hell|damn\s+you)\b/i,
+    /\b(idiot|moron|imbecile|retard|dumb\s*ass|dumb\s*f\w+)\b/i,
+    /\b(you\s*(are\s*)?(a\s*)?(loser|scum|trash|garbage|worthless|piece\s*of\s*(sh[i1]t|crap)))\b/i,
+    /\b(i\s*hate\s*you|i\s*despise\s*you|you\s*(disgust|sicken)\s*me)\b/i,
+  ];
+
+  // ── Sexual solicitation / harassment detector ─────────────────
+  const SEXUAL_PATTERNS = [
+    /\b(one\s*night\s*stand)\b/i,
+    /\b(friends?\s*with\s*benefits?|fwb)\b/i,
+    /\b(hook\s*up|hookup)\b/i,
+    /\b(no\s*strings?\s*attached|nsa)\b/i,
+    /\b(come\s*over\s*(tonight|now))\b/i,
+    /\b(wanna\s*(f+u+c+k|do\s*it|sleep\s*with|have\s*sex|get\s*naughty))\b/i,
+    /\b(want\s*to\s*(have\s*sex|sleep\s*with\s*you|do\s*it))\b/i,
+    /\b(send\s*(me\s*)?(nude|nudes|naked\s*pic|dick\s*pic))\b/i,
+    /\b(show\s*me\s*(your\s*)?(boobs?|tits?|ass|body|nude|naked))\b/i,
+    /\b(suck\s*(my|it)|blow\s*(me|job))\b/i,
+    /\b(sleep\s*with\s*(me|you\s*tonight))\b/i,
+    /\b(you\s*(are|look)\s*(so\s*)?(sexy|hot\s*af|fuckable|bangable))\b/i,
+    /\b(i\s*want\s*(to\s*)?(f+u+c+k|bang|screw|nail|bone|smash)\s*(you|u))\b/i,
+    /\b(let\s*me\s*(f+u+c+k|bang|screw|nail|lick))\b/i,
+    /\b(are\s*you\s*(horny|dtf|down\s*to\s*f))\b/i,
+    /\bdtf\b/i,
+    /\b(porn|xxx|onlyfans|only\s*fans)\b/i,
+    /\b(meet\s*(for\s*)?(sex|fun|pleasure|naughty))\b/i,
+    /\b(get\s*(in\s*)?bed\s*with\s*(me|you))\b/i,
+    /\b(our\s*(little\s*)?secret)\b/i,
+    /\b(don'?t\s*tell\s*(anyone|your\s*(parents?|mum|dad|mom)))\b/i,
+  ];
+
+  function isSexualMessage(msg) {
+    return SEXUAL_PATTERNS.some(p => p.test(msg));
   }
 
-  // ── Load a sample message ──────────────────────────────────────────────────
+  function isThreatMessage(msg) {
+    return THREAT_PATTERNS.some(p => p.test(msg));
+  }
+
+  function isAbuseMessage(msg) {
+    return PROFANITY_PATTERNS.some(p => p.test(msg));
+  }
+
+  // ── Spam category detector (client-side hints for sticker tags) ────────────
+  const SPAM_CATEGORIES = [
+    { label: '🎰 Lottery',    re: /\b(won|winner|prize|jackpot|lucky draw|lottery|awarded)\b/i },
+    { label: '🎣 Phishing',   re: /\b(account|verify|suspend|login|secure|blocked|compromised|locked)\b/i },
+    { label: '💸 Loan Scam',  re: /\b(loan|instant cash|processing fee|no documents|pre.?approved)\b/i },
+    { label: '☠️ Extortion',  re: /\b(hacked|malware|arrest|footage|bitcoin|pay|expose|release)\b/i },
+    { label: '₿ Crypto',      re: /\b(bitcoin|crypto|btc|nft|invest|profit|trading bot|returns)\b/i },
+    { label: '💼 Job Scam',   re: /\b(work from home|earn per day|part.?time|hiring|data entry|registration fee)\b/i },
+    { label: '📦 Delivery',   re: /\b(parcel|shipment|customs|redeliver|courier|package on hold)\b/i },
+    { label: '🏛️ Fake Govt',  re: /\b(income tax|pan card|aadhaar|epf|irs|trai|police|warrant|rbi|kyc)\b/i },
+    { label: '🛍️ Fake Offer', re: /\b(cashback|gift card|voucher|discount|sale|promo|reward points)\b/i },
+    { label: '🔑 OTP Fraud',  re: /\b(otp|one.?time|pin|code|share.*agent)\b/i },
+  ];
+
+  function detectCategories(msg) {
+    return SPAM_CATEGORIES.filter(c => c.re.test(msg)).map(c => c.label);
+  }
+
+  // ── Warning tips per spam category ────────────────────────────
+  const SPAM_WARNINGS = {
+    '🎰 Lottery':    '⚠️ Lottery scams trick you into sharing personal info or paying "fees" for a prize that doesn\'t exist. Legitimate lotteries never contact you unsolicited.',
+    '🎣 Phishing':   '🔒 Never click links asking you to verify account details. Go directly to the official website or app instead.',
+    '💸 Loan Scam':  '🏦 Legitimate lenders never ask for upfront fees. Any advance payment request is a red flag.',
+    '☠️ Threat':     '🚨 This is a sextortion or ransomware scam. Do NOT pay. Block the sender and report to cybercrime authorities.',
+    '₿ Crypto':      '💡 No investment can guarantee returns. Cryptocurrency giveaways are always scams — even if they appear to be from celebrities.',
+    '💼 Job Scam':   '🏢 Real employers never ask for registration fees. Research the company independently before sharing any details.',
+    '📦 Delivery':   '📬 Verify unexpected delivery notices directly through the official courier\'s website using your order number.',
+    '🏛️ Fake Govt':  '🏛️ Government agencies never contact you via SMS to demand immediate payments or personal info. Verify through official channels.',
+    '🛍️ Fake Offer': '🛒 Deals that look too good to be true always are. Always shop on official apps/websites only.',
+    '🔑 OTP Fraud':  '🔑 Your bank or service provider will NEVER ask you to share an OTP. Sharing it gives scammers full account access.',
+  };
+
+  const DEFAULT_SPAM_WARNING = '🚨 Do not click any links or call any numbers in this message. Block the sender and report as spam.';
+  const HAM_REASSURANCE      = '🌿 This message appears to be legitimate. No suspicious patterns were detected.';
+
+  // ── Character counter ──────────────────────────────────────────
+  function updateCount() {
+    document.getElementById('char-count').textContent =
+      document.getElementById('msg-input').value.length;
+  }
+
+  // ── Load sample ────────────────────────────────────────────────
   function loadSample(text) {
-    document.getElementById("msg-input").value = text;
+    document.getElementById('msg-input').value = text;
     updateCount();
     classifyMessage();
   }
 
-  // ── Clear everything ───────────────────────────────────────────────────────
+  // ── Clear all ──────────────────────────────────────────────────
   function clearAll() {
-    document.getElementById("msg-input").value = "";
+    document.getElementById('msg-input').value = '';
     updateCount();
-    const box = document.getElementById("result-box");
-    box.style.display = "none";
+    document.getElementById('result-box').style.display = 'none';
   }
 
-  // ── Main classify function ─────────────────────────────────────────────────
+  // ── Main classify ──────────────────────────────────────────────
   async function classifyMessage() {
-    const input = document.getElementById("msg-input");
+    const input = document.getElementById('msg-input');
     const msg   = input.value.trim();
     if (!msg) { input.focus(); return; }
 
-    // Show loading state
-    const btn = document.getElementById("classify-btn");
+    const btn = document.getElementById('classify-btn');
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span> Analyzing…';
 
     try {
-      const res  = await fetch("/predict", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
+      const res  = await fetch('/predict', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ message: msg }),
       });
       const data = await res.json();
-
       if (data.error) { alert(data.error); return; }
-
-      showResult(data);
+      showResult(data, msg);
       loadHistory();
-
     } catch (err) {
-      alert("Server error. Make sure app.py is running.");
+      alert('Server error. Make sure app.py is running.');
     } finally {
       btn.disabled = false;
-      btn.innerHTML = "🔎 Check Message";
+      btn.innerHTML = '🔎 Analyze Message';
     }
   }
 
-  // ── Render result ──────────────────────────────────────────────────────────
-  function showResult(data) {
-    const box    = document.getElementById("result-box");
-    const isSpam = data.is_spam;
+  // ── Render result ──────────────────────────────────────────────
+  function showResult(data, rawMsg) {
+    const box        = document.getElementById('result-box');
+    const isSpam     = data.is_spam;
+    const conf       = data.confidence;
+    const overrideT  = data.override_type || ""; // "threat"|"sexual"|"abuse"|"spam"|""
+    const isThreat   = overrideT === 'threat'  || isThreatMessage(rawMsg);
+    const isSexual   = overrideT === 'sexual'  || (!isThreat && isSexualMessage(rawMsg));
+    const isAbuse    = overrideT === 'abuse'   || (!isThreat && !isSexual && isAbuseMessage(rawMsg));
 
-    box.className   = isSpam ? "spam" : "ham";
-    box.style.display = "block";
+    box.className     = isSpam ? 'spam' : 'ham';
+    box.style.display = 'block';
 
-    document.getElementById("result-icon").textContent  = isSpam ? "🚨" : "✅";
-    document.getElementById("result-label").textContent = isSpam ? "SPAM Detected" : "Legitimate Message";
-    document.getElementById("result-sub").textContent   =
-      isSpam
-        ? "This message looks suspicious. Do not click any links."
-        : "This message appears to be safe and legitimate.";
+    // ── Emoji + label ──────────────────────────────────────────
+    if (isSpam && isThreat) {
+      document.getElementById('result-emoji').textContent = '💀';
+      document.getElementById('result-label').textContent = '🚨 DANGEROUS — THREAT';
+      document.getElementById('result-sub').textContent   =
+        `${conf}% confidence · Threatening or violent content detected`;
+    } else if (isSpam && isSexual) {
+      document.getElementById('result-emoji').textContent = '🔞';
+      document.getElementById('result-label').textContent = '⚠ DANGEROUS — SEXUAL HARASSMENT';
+      document.getElementById('result-sub').textContent   =
+        `${conf}% confidence · Sexual solicitation or harassment detected`;
+    } else if (isSpam && isAbuse) {
+      document.getElementById('result-emoji').textContent = '🤬';
+      document.getElementById('result-label').textContent = '⚠ DANGEROUS — ABUSIVE';
+      document.getElementById('result-sub').textContent   =
+        `${conf}% confidence · Profanity or abusive language detected`;
+    } else if (isSpam) {
+      document.getElementById('result-emoji').textContent = '☣️';
+      document.getElementById('result-label').textContent = '⚠ DANGEROUS — SPAM';
+      document.getElementById('result-sub').textContent   =
+        `${conf}% confidence · Suspicious spam message detected`;
+    } else {
+      document.getElementById('result-emoji').textContent = '🕊️';
+      document.getElementById('result-label').textContent = '✔ SAFE — Legitimate';
+      document.getElementById('result-sub').textContent   =
+        `${conf}% confidence · No spam, threat, or abuse signals found`;
+    }
 
-    const conf = data.confidence;
-    document.getElementById("conf-value").textContent   = conf + "%";
-    document.getElementById("conf-bar").style.width     = conf + "%";
+    // Confidence bar
+    document.getElementById('conf-value').textContent = conf + '%';
+    document.getElementById('conf-bar').style.width   = conf + '%';
 
-    document.getElementById("cleaned-text").innerHTML =
-      `<strong>Preprocessed tokens:</strong> ${data.cleaned || "(empty after cleaning)"}`;
+    // ── Sticker tags ───────────────────────────────────────────
+    const stickersEl = document.getElementById('result-stickers');
+    if (isSpam && isThreat) {
+      stickersEl.innerHTML =
+        '<span class="rs-tag">💀 Threat / Violence</span>' +
+        '<span class="rs-tag">🚨 Dangerous</span>' +
+        '<span class="rs-tag">🔞 Harmful Content</span>';
+    } else if (isSpam && isSexual) {
+      stickersEl.innerHTML =
+        '<span class="rs-tag">🔞 Sexual Harassment</span>' +
+        '<span class="rs-tag">🚫 Solicitation</span>' +
+        '<span class="rs-tag">⚠ Inappropriate</span>';
+    } else if (isSpam && isAbuse) {
+      stickersEl.innerHTML =
+        '<span class="rs-tag">🤬 Profanity</span>' +
+        '<span class="rs-tag">🚫 Abusive Language</span>' +
+        '<span class="rs-tag">🔞 Offensive</span>';
+    } else if (isSpam) {
+      const cats = detectCategories(rawMsg);
+      stickersEl.innerHTML = cats.length
+        ? cats.map(c => `<span class="rs-tag">${c}</span>`).join('')
+        : '<span class="rs-tag">🚨 Suspicious</span>';
+    } else {
+      stickersEl.innerHTML =
+        '<span class="rs-tag">✅ Legitimate</span>' +
+        '<span class="rs-tag">🕊️ Safe</span>' +
+        '<span class="rs-tag">💚 No Threat</span>';
+    }
 
-    // Scroll result into view
-    box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    // ── Warning / tip ──────────────────────────────────────────
+    let warningText;
+    if (isSpam && isThreat) {
+      warningText = '🚨 This message contains threatening or violent language. Do NOT respond. Block the sender immediately and report to cybercrime / law enforcement authorities.';
+    } else if (isSpam && isSexual) {
+      warningText = '🔞 This message contains sexual solicitation or harassment. You do not have to engage. Block the sender immediately and report to the platform or relevant authorities.';
+    } else if (isSpam && isAbuse) {
+      warningText = '🤬 This message contains profanity or abusive language. Block the sender and report harassment to the platform or authorities.';
+    } else if (isSpam) {
+      const cats = detectCategories(rawMsg);
+      warningText = cats.length
+        ? (SPAM_WARNINGS[cats[0]] || DEFAULT_SPAM_WARNING)
+        : DEFAULT_SPAM_WARNING;
+    } else {
+      warningText = HAM_REASSURANCE;
+    }
+    document.getElementById('result-warning').textContent = warningText;
+
+    // Cleaned tokens
+    document.getElementById('cleaned-text').innerHTML =
+      `<strong>Preprocessed tokens:</strong> ${data.cleaned || '(empty after cleaning)'}`;
+
+    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
-  // ── Load prediction history ────────────────────────────────────────────────
+  // ── Load history ───────────────────────────────────────────────
   async function loadHistory() {
-    const res  = await fetch("/history");
+    const res  = await fetch('/history');
     const data = await res.json();
-    const list = document.getElementById("history-list");
-    const empty = document.getElementById("history-empty");
+    const list  = document.getElementById('history-list');
+    const empty = document.getElementById('history-empty');
 
     if (!data.length) {
-      if (empty) empty.style.display = "block";
+      if (empty) empty.style.display = 'block';
       return;
     }
-    if (empty) empty.style.display = "none";
+    if (empty) empty.style.display = 'none';
 
     list.innerHTML = data.map(item => `
       <div class="history-item">
-        <span class="badge ${item.is_spam ? 'spam' : 'ham'}">
-          ${item.is_spam ? 'Spam' : 'Ham'}
+        <span class="h-badge ${item.is_spam ? 'spam' : 'ham'}">
+          ${item.is_spam ? '☣️ Spam' : '🕊️ Safe'}
         </span>
         <span class="history-msg" title="${escHtml(item.message)}">
           ${escHtml(item.message)}
         </span>
+        <span class="history-conf">${item.confidence}%</span>
         <span class="history-time">${item.time}</span>
       </div>
-    `).join("");
+    `).join('');
   }
 
-  // ── Clear history ──────────────────────────────────────────────────────────
+  // ── Clear history ──────────────────────────────────────────────
   async function clearHistory() {
-    await fetch("/clear-history", { method: "POST" });
-    document.getElementById("history-list").innerHTML =
-      '<div class="empty-state" id="history-empty">No predictions yet. Check a message above!</div>';
-    const box = document.getElementById("result-box");
-    box.style.display = "none";
+    await fetch('/clear-history', { method: 'POST' });
+    document.getElementById('history-list').innerHTML =
+      '<div class="empty-state" id="history-empty">No predictions yet — try a message above!</div>';
+    document.getElementById('result-box').style.display = 'none';
   }
 
-  // ── Escape HTML to prevent XSS ─────────────────────────────────────────────
+  // ── Escape HTML ────────────────────────────────────────────────
   function escHtml(str) {
-    return str.replace(/&/g,"&amp;").replace(/</g,"&lt;")
-              .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;')
+              .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  // ── Allow Ctrl+Enter to submit ─────────────────────────────────────────────
-  document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("msg-input").addEventListener("keydown", e => {
-      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) classifyMessage();
+  // ── Keyboard shortcut ──────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('msg-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) classifyMessage();
     });
     loadHistory();
   });

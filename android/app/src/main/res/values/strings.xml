@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Spam Detector</string>
+    <string name="status_active">SMS auto-detection is active ✓</string>
+    <string name="status_inactive">SMS permission required</string>
+    <string name="btn_save_ip">Save IP</string>
+    <string name="btn_ping">Test Connection</string>
+    <string name="btn_check">Check Message</string>
+    <string name="hint_server_ip">e.g. 192.168.1.5</string>
+    <string name="hint_message">Paste or type a message to check for spam…</string>
+</resources>
